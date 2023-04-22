@@ -132,15 +132,16 @@ public class BuyAndSellStockInXTransaction extends Application {
 
     private static XYDataset createDataset() {
         Solution solution = new Solution();
-        solution.maxProfitDp(solution.createPrices());
+        solution.maxProfit(3, solution.createPrices());
         List<List<Integer>> track = solution.track;
 
         XYSeriesCollection xySeriesCollection = new XYSeriesCollection();
         xySeriesCollection.addSeries(createXYSeries(track.get(0), "price"));
-        xySeriesCollection.addSeries(createXYSeries(track.get(1), "buy1"));
-        xySeriesCollection.addSeries(createXYSeries(track.get(2), "sell1"));
-        xySeriesCollection.addSeries(createXYSeries(track.get(3), "buy2"));
-        xySeriesCollection.addSeries(createXYSeries(track.get(4), "sell2"));
+        int count = (track.size() - 1) / 2;
+        for (int i = 0; i < count; i++) {
+            xySeriesCollection.addSeries(createXYSeries(track.get(2 * i + 1), "buy" + i));
+            xySeriesCollection.addSeries(createXYSeries(track.get(2 * i + 2), "sell" + i));
+        }
         return xySeriesCollection;
     }
 
@@ -189,31 +190,38 @@ public class BuyAndSellStockInXTransaction extends Application {
             return new int[]{13, 13, 15, 11, 12, 13, 12, 14, 7, 13, 0, 9, 3, 2, 5, 4};
         }
 
-        public int maxProfitDp(int[] prices) {
-            int buy1 = Integer.MAX_VALUE, buy2 = Integer.MAX_VALUE;
-            int sell1 = 0, sell2 = 0;
+        public int maxProfit(int k, int[] prices) {
+            int[] dp = new int[k * 2];
+            for (int i = 0; i < dp.length; i++) {
+                dp[i] = Integer.MAX_VALUE;
+                i++;
+                dp[i] = 0;
+            }
 
             track.add(new ArrayList<>());
             for (int price : prices) {
                 track.get(0).add(price);
             }
-            track.add(new ArrayList<>());
-            track.add(new ArrayList<>());
-            track.add(new ArrayList<>());
-            track.add(new ArrayList<>());
-            for (int i = 0; i < prices.length; i++) {
-                buy1 = Math.min(buy1, prices[i]);
-                sell1 = Math.max(sell1, prices[i] - buy1);
-                buy2 = Math.min(buy2, prices[i] - sell1);
-                sell2 = Math.max(sell2, prices[i] - buy2);
-
-                track.get(1).add(buy1);
-                track.get(2).add(sell1);
-                track.get(3).add(buy2);
-                track.get(4).add(sell2);
+            for (int i = 0; i < k * 2; i++) {
+                track.add(new ArrayList<>());
             }
 
-            return sell2;
+            for (int i = 0; i < prices.length; i++) {
+                dp[0] = Math.min(dp[0], prices[i]);
+                dp[1] = Math.max(dp[1], prices[i] - dp[0]);
+                track.get(1).add(dp[0]);
+                track.get(2).add(dp[1]);
+                for (int j = 2; j < dp.length; j++) {
+                    dp[j] = Math.min(dp[j], prices[i] - dp[j - 1]);
+                    track.get(j + 1).add(dp[j]);
+                    j++;
+                    dp[j] = Math.max(dp[j], prices[i] - dp[j - 1]);
+                    track.get(j + 1).add(dp[j]);
+
+                }
+            }
+
+            return dp[dp.length - 1];
         }
     }
 }
